@@ -2,7 +2,7 @@
 > **Agentic Security Incident Response & Threat Enrichment Pipeline**
 
 ## 🎥 Project Demo (V4 Agentic AI)
-**[CLICK HERE TO WATCH THE LIVE DEMO](https://github.com/Naifnizami/SOAR-EDR-Automation-Lab/blob/main/SOC_Agno_Project.mp4)**
+**[CLICK HERE TO WATCH THE LIVE DEMO](https://github.com/Naifnizami/SOAR-EDR-Automation-Lab/blob/main/AI_SOC_Agent_Automated_Triage_Demo.mp4)**
 
 ## In this video:
 1.  **False Positive:** Attack from localhost is detected and **Auto-Closed** instantly.
