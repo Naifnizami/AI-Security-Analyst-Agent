@@ -104,3 +104,32 @@ Used to verify the full SOC integration:
 
 ## ⚖️ Disclaimer
 This project is intended for educational and defensive security purposes only. Ensure you have explicit authorization before monitoring networks or automating responses on enterprise infrastructure.
+
+graph TD
+    subgraph Host_Environment [🖥️ Kali Linux Host / Server]
+        Attacker(🔴 Attacker / Scan) -->|SSH Failure| AuthLog[/var/log/auth.log/]
+        AuthLog --> Splunk[🔥 Splunk SIEM]
+        Splunk -->|Trigger Webhook| LocalPort[Host Port: 5000]
+    end
+
+    subgraph Docker_Container [🐳 Docker Container: sec-agent:prod]
+        LocalPort -->|Forward| Gunicorn[⚙️ Gunicorn WSGI]
+        
+        subgraph Workers [4 Parallel Worker Processes]
+            Gunicorn --> FlaskApp[src/main.py]
+            FlaskApp --> Logic{Is IP Allowed?}
+            
+            Logic -- YES (False Positive) --> AutoClose[✅ Auto-Close Ticket]
+            Logic -- NO (Potential Threat) --> Agent[🤖 AI Agent Llama-3]
+        end
+    end
+
+    subgraph Cloud_Services [☁️ External Cloud APIs]
+        Agent <-->|JSON Request| GroqAPI[⚡ Groq API]
+        AutoClose -->|API POST| Jira[Ticketing System]
+        Agent -->|Enrichment Data| Jira
+    end
+
+    style Docker_Container fill:#e1f5fe,stroke:#01579b,stroke-width:2px,rx:10
+    style Splunk fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style Gunicorn fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
