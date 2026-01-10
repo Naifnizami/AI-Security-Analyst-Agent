@@ -2,7 +2,7 @@
 
 A containerized Security Orchestration, Automation, and Response (SOAR) microservice that acts as a **Tier-1 SOC Analyst**. It integrates **Splunk** (SIEM), **Groq/Llama-3** (AI Analysis), and **Jira** (Ticketing) into a fully automated SOC pipeline.
 
-This is not just a script, this is a **deployment-ready Dockerized application** served via Gunicorn.
+This is not just a script—this is a **deployment-ready Dockerized application** served via Gunicorn.
 
 ---
 
@@ -102,36 +102,43 @@ Used to verify the full SOC integration:
 └── README.md
 ```
 
-## ⚖️ Disclaimer
-This project is intended for educational and defensive security purposes only. Ensure you have explicit authorization before monitoring networks or automating responses on enterprise infrastructure.
+## 📊 System Data Flow
 
 ```mermaid
 graph TD
-    subgraph Host_Environment [🖥️ Kali Linux Host / Server]
-        Attacker(🔴 Attacker / Scan) -->|SSH Failure| AuthLog[/var/log/auth.log/]
-        AuthLog --> Splunk[🔥 Splunk SIEM]
-        Splunk -->|Trigger Webhook| LocalPort[Host Port: 5000]
+    %% Define styles for clarity
+    classDef docker fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,rx:10;
+    classDef host fill:#fff3e0,stroke:#e65100,stroke-width:2px;
+    classDef external fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+
+    subgraph Host_Environment [🖥️ Host Machine / Linux OS]
+        Splunk[🔥 Splunk SIEM] -->|HTTP POST Alert| DockerPort[Host Port: 5000]
     end
 
     subgraph Docker_Container [🐳 Docker Container: sec-agent:prod]
-        LocalPort -->|Forward| Gunicorn[⚙️ Gunicorn WSGI]
+        DockerPort -->|Map Port| GunicornMaster[⚙️ Gunicorn Master]
         
-        subgraph Workers [4 Parallel Worker Processes]
-            Gunicorn --> FlaskApp[src/main.py]
-            FlaskApp --> Logic{Is IP Allowed?}
+        subgraph Workers [🧵 4 Parallel Worker Processes]
+            GunicornMaster -.->|Distribute Load| FlaskApp1[src/main.py]
+            GunicornMaster -.->|Distribute Load| FlaskApp2[...]
             
-            Logic -- YES (False Positive) --> AutoClose[✅ Auto-Close Ticket]
-            Logic -- NO (Potential Threat) --> Agent[🤖 AI Agent Llama-3]
+            FlaskApp1 --> Logic{Whitelisted IP?}
         end
+        
+        Logic -- YES --> AutoClose[✅ Auto-Close]
+        Logic -- NO (Threat) --> AI[🤖 Llama-3 Analysis]
     end
 
-    subgraph Cloud_Services [☁️ External Cloud APIs]
-        Agent <-->|JSON Request| GroqAPI[⚡ Groq API]
-        AutoClose -->|API POST| Jira[Ticketing System]
-        Agent -->|Enrichment Data| Jira
+    subgraph External_Cloud [☁️ Internet]
+        AI <-->|JSON| GroqAPI[⚡ Groq API]
+        AutoClose -->|API| Jira[Jira Ticket]
+        AI -->|Report| Jira
     end
 
-    style Docker_Container fill:#e1f5fe,stroke:#01579b,stroke-width:2px,rx:10
-    style Splunk fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style Gunicorn fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-   ```
+    class Host_Environment host;
+    class Docker_Container docker;
+    class External_Cloud external;
+```
+
+## ⚖️ Disclaimer
+This project is intended for educational and defensive security purposes only. Ensure you have explicit authorization before monitoring networks or automating responses on enterprise infrastructure.
