@@ -1,131 +1,106 @@
-🛡️ AI Security Analyst Agent
+# 🛡️ AI Security Analyst Agent (Production Grade)
 
-Production-Grade SOAR Microservice
+A containerized Security Orchestration, Automation, and Response (SOAR) microservice that acts as a **Tier-1 SOC Analyst**. It integrates **Splunk** (SIEM), **Groq/Llama-3** (AI Analysis), and **Jira** (Ticketing) into a fully automated SOC pipeline.
 
-A containerized Security Orchestration, Automation, and Response (SOAR) platform that automatically triages security alerts using AI.
-It integrates Splunk (SIEM), Groq / Llama-3 (LLM), and Jira (Ticketing) into a fully automated SOC pipeline.
+This is not just a script—this is a **deployment-ready Dockerized application** served via Gunicorn.
 
-This is not a demo script — this is a deployment-ready SOC microservice.
+---
 
-🎥 Demo Video
-[https://github.com/Naifnizami/AI-Security-Analyst-Agent/blob/main/AI_SOC_Agent_Automated_Triage_Demo.mp4]
-If the video does not play inside the GitHub mobile app, tap “View Raw” or download it.
+### 🎥 Demo Video
+[**Click here to watch the Automated Triage Demo**](AI_SOC_Agent_Automated_Triage_Demo.mp4)  
+*(Note: If the video does not play inside the GitHub mobile app, please tap "View Raw" or download the file.)*
 
-🚀 What This Agent Does
+---
 
-This system acts like a Tier-1 SOC Analyst:
+## 🚀 What This Agent Does
+1.  **Ingest:** Receives webhook alerts from Splunk when an attack is detected.
+2.  **Triage:** Automatically checks if the IP is a "False Positive" (Local/Whitelisted) or a "True Threat".
+3.  **Investigate:** Uses **Llama-3 (70B)** to perform a threat analysis on malicious IPs.
+4.  **Act:**
+    *   **Auto-Close:** Resolves Jira tickets immediately for safe alerts (saving analyst time).
+    *   **Escalate:** Creates high-severity Jira incidents with a full AI-written report for real threats.
 
-Step	Action
-1	Receives security alerts from Splunk via webhook
-2	Parses the event and extracts suspicious IPs
-3	Determines False Positive vs True Threat
-4	Uses Llama-3 (Groq) to investigate real attackers
-5	Automatically updates Jira
-6	Closes safe alerts or escalates real incidents
+## 🏗️ Core Capabilities
+*   **Production Architecture:** Runs on **Gunicorn** with 4 parallel worker processes for high concurrency.
+*   **Containerized:** Deploys via **Docker (Debian Slim)**; environment agnostic (runs on AWS, Azure, or Local Linux).
+*   **Smart Detection:** Includes logic to whitelist localhost/private scans vs. external attackers.
+*   **AI-Powered:** Utilizes the Groq API for sub-second inference speeds.
 
-No human intervention required.
+## 🛠️ Architecture Stack
 
-🧠 Core Capabilities
+| Component | Technology | Purpose |
+| :--- | :--- | :--- |
+| **Runtime** | Docker (Python 3.10-slim) | Isolated, reproducible environment. |
+| **Server** | Gunicorn (WSGI) | Production-grade server for handling concurrent webhooks. |
+| **SIEM** | Splunk Enterprise | Monitors system logs (`/var/log/auth.log`) for attacks. |
+| **Intelligence** | Llama 3 (via Groq) | Analyzes IPs and writes incident reports. |
+| **Ticketing** | Jira Cloud API | Workflow automation. |
 
-Production Architecture
+---
 
-Gunicorn WSGI server
+## 📦 Quick Start (Production Deployment)
 
-4 parallel workers
-
-Runs inside hardened Docker container
-
-Smart Detection
-
-Recognizes trusted IPs (localhost, internal scans)
-
-Flags real external attackers
-
-AI-Powered Investigation
-
-Llama-3 performs threat analysis
-
-Generates incident intelligence reports
-
-SOC Automation
-
-Auto-closes false positives
-
-Creates & escalates real incidents in Jira
-
-🏗️ Architecture
-Component	Technology	Purpose
-Container	Docker (Debian Slim)	Portable SOC deployment
-API Server	Flask + Gunicorn	Receives Splunk alerts
-SIEM	Splunk Enterprise	Monitors /var/log/auth.log
-AI Engine	Llama-3-70B (Groq)	Threat investigation
-Ticketing	Jira Cloud API	Incident management
-📦 Quick Start (Production Deployment)
-1️⃣ Clone the Repository
+### 1. Clone & Configure
+```bash
 git clone https://github.com/Naifnizami/AI-Security-Analyst-Agent.git
 cd AI-Security-Analyst-Agent
-
-2️⃣ Configure Secrets
 mv .env.example .env
+```
 
-
-Edit .env:
-
-GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxx
-JIRA_API_TOKEN=ATxxxxxxxxxxxxxx
+### 2. Add Credentials
+Edit the `.env` file with your keys:
+```ini
+GROQ_API_KEY=gsk_your_key_here
+JIRA_API_TOKEN=your_jira_token_here
 JIRA_EMAIL=your_email@example.com
+```
 
-3️⃣ Build the Production Image
+### 3. Build & Run
+```bash
+# Build the optimized production image
 sudo docker build -t sec-agent:prod .
 
-4️⃣ Run the SOC Agent
+# Run the agent (Listening on Port 5000)
 sudo docker run -p 5000:5000 --env-file .env sec-agent:prod
+```
+*Your AI SOC Analyst is now live and listening.*
 
+---
 
-Your AI SOC Analyst is now live.
+## 🧪 Verification & Demo Methodology
 
-🧪 How Alerts Are Generated
-🔹 Method 1 — Direct Injection (Demo Mode)
+The demo video showcases two specific methods of testing the pipeline:
 
-Used in the video for speed and isolation testing.
-
+### ♦ Method 1: Direct Injection (Fast Triage)
+Used in the video to instantly verify the Agent's Python/AI logic without waiting for Splunk indexing.
+```bash
+# This sends a "True Positive" payload directly to the agent
 curl -X POST http://127.0.0.1:5000/webhook \
--d '{"result": {"_raw": "Suspicious traffic to 185.196.8.2"}}'
+     -H "Content-Type: application/json" \
+     -d '{"result": {"_raw": "Suspicious outbound traffic to 185.196.8.2"}}'
+```
+*   **Note:** Because this uses `curl` to talk directly to the container, these specific demo events do not appear in Splunk logs. They are used to stress-test the Agent.
 
+### ♦ Method 2: The Real-World Pipeline (End-to-End)
+Used to verify the full SOC integration:
+1.  **Attacker:** Runs `ssh root@localhost` and fails password.
+2.  **OS Log:** Linux writes event to `/var/log/auth.log`.
+3.  **Splunk:** Reads the log and fires a Trigger Action (Webhook).
+4.  **Agent:** Receives data, analyzes it, and creates the Jira ticket.
 
-These events bypass Splunk and go directly to the Agent for logic testing.
+---
 
-🔹 Method 2 — Real-World SOC Pipeline
-
-Attacker runs
-
-ssh root@<server-ip>
-
-
-Linux logs it to
-
-/var/log/auth.log
-
-
-Splunk detects the failed login
-
-Splunk sends the alert to the Agent
-
-AI investigates and updates Jira
-
-This is true end-to-end SOC automation.
-
-📁 Project Structure
+## 📂 Project Structure
+```text
 /
-├── config/              # Whitelists, rules
+├── config/              # Centralized configuration (Allowlists, Thresholds)
 ├── src/
-│   ├── main.py          # Flask webhook + Gunicorn entry
-│   └── agent_logic.py   # Llama-3 decision engine
-├── Dockerfile          # Production build
-├── requirements.txt    # Locked dependencies
+│   ├── main.py          # Flask Webhook & Gunicorn Entrypoint (The "Engine")
+│   └── agent_logic.py   # AI Agent Logic & Llama-3 Instructions (The "Brain")
+├── Dockerfile           # Multi-stage production build instruction
+├── requirements.txt     # Locked dependencies for stability
 └── README.md
+```
 
-⚖️ Disclaimer
-
-This project is for educational and defensive security research only.
-You must have explicit authorization to monitor systems or analyze traffic.
+## ⚖️ Disclaimer
+This project is intended for educational and defensive security purposes only. Ensure you have explicit authorization before monitoring networks or automating responses on enterprise infrastructure.
