@@ -105,6 +105,7 @@ Used to verify the full SOC integration:
 ## ⚖️ Disclaimer
 This project is intended for educational and defensive security purposes only. Ensure you have explicit authorization before monitoring networks or automating responses on enterprise infrastructure.
 
+```mermaid
 graph TD
     subgraph Host_Environment [🖥️ Kali Linux Host / Server]
         Attacker(🔴 Attacker / Scan) -->|SSH Failure| AuthLog[/var/log/auth.log/]
@@ -133,3 +134,4 @@ graph TD
     style Docker_Container fill:#e1f5fe,stroke:#01579b,stroke-width:2px,rx:10
     style Splunk fill:#fff3e0,stroke:#e65100,stroke-width:2px
     style Gunicorn fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+   ```
