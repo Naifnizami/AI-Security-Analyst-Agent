@@ -8,7 +8,7 @@ It integrates Splunk (SIEM), Groq / Llama-3 (LLM), and Jira (Ticketing) into a f
 This is not a demo script — this is a deployment-ready SOC microservice.
 
 🎥 Demo Video
-
+[https://github.com/Naifnizami/AI-Security-Analyst-Agent/blob/main/AI_SOC_Agent_Automated_Triage_Demo.mp4]
 If the video does not play inside the GitHub mobile app, tap “View Raw” or download it.
 
 🚀 What This Agent Does
