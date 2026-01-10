@@ -3,11 +3,26 @@ import requests
 import json
 import re
 import os
+import logging
 from datetime import datetime
-from . import agent_logic as ai_analyst  # <--- IMPORTING THE BRAIN
+from . import agent_logic as ai_analyst
 
 app = Flask(__name__)
 
+# ============================
+# 📝 LOGGING CONFIGURATION
+# ============================
+# This makes logs look like: [2026-01-10 12:00:00] [INFO] Alert Received...
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+logging.getLogger("werkzeug").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("neo4j").setLevel(logging.WARNING)
 # ============================
 # ⬇️ JIRA CONFIGURATION ⬇️
 # ============================
@@ -17,8 +32,8 @@ JIRA_API_TOKEN = os.environ.get('JIRA_API_TOKEN')
 PROJECT_KEY = "KAN"
 # ============================
 
-# Whitelist (Your VM Localhost) - Auto Close these
-WHITELIST_IPS = ["127.0.0.1", "localhost"]
+# Whitelist (Your VM Localhost and Test IPs)
+WHITELIST_IPS = ["127.0.0.1", "localhost", "192.168.1.5", "192.168.15.128"]
 
 def close_ticket(issue_key):
     """Auto-closes False Positive tickets"""
@@ -27,7 +42,6 @@ def close_ticket(issue_key):
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     
     try:
-        # Find the 'Done' transition ID dynamically
         r = requests.get(url, auth=auth, headers=headers)
         transitions = r.json().get("transitions", [])
         
@@ -40,10 +54,10 @@ def close_ticket(issue_key):
         if done_id:
             payload = json.dumps({"transition": {"id": done_id}})
             requests.post(url, auth=auth, headers=headers, data=payload)
-            print(f"[✅] Auto-Closed Ticket {issue_key}")
+            logger.info(f"[✅] Auto-Closed Ticket {issue_key}")
             
     except Exception as e:
-        print(f"[-] Auto-Close Failed: {e}")
+        logger.error(f"[-] Auto-Close Failed: {e}")
 
 def create_issue(source_ip, alert_name, is_fp):
     url = f"{JIRA_URL}/rest/api/3/issue"
@@ -52,18 +66,14 @@ def create_issue(source_ip, alert_name, is_fp):
 
     # --- 🧠 THE AI LOGIC ---
     if is_fp:
-        # False Positive (Cheap & Fast)
         summary = f"[FP] Authorized Scan - {source_ip}"
-        priority = "Low"
         description_text = (
             "**Status:** False Positive\n"
             "**Action:** Auto-Closed via AllowList."
         )
     else:
-        # True Positive (Ask Agno for Intelligence)
-        print("    ⚡ Invoking AI Analyst for Investigation...")
+        logger.info("    ⚡ Invoking AI Analyst for Investigation...")
         summary = f"🚨 [TP] THREAT - {source_ip}"
-        priority = "High"
         
         # Call the Agent!
         ai_report = ai_analyst.investigate_ip(source_ip, alert_name)
@@ -73,12 +83,11 @@ def create_issue(source_ip, alert_name, is_fp):
             f"-----------------------------------\n"
             f"**Alert:** {alert_name}\n"
             f"**Target:** {source_ip}\n\n"
-            f"{ai_report}\n" # <--- INSERTING AI BRAIN HERE
+            f"{ai_report}\n"
             f"-----------------------------------\n"
             f"**Status:** Escalated for Human Review."
         )
 
-    # Payload Construction
     payload = json.dumps({
         "fields": {
             "project": {"key": PROJECT_KEY},
@@ -92,22 +101,20 @@ def create_issue(source_ip, alert_name, is_fp):
                 }]
             },
             "issuetype": {"name": "Task"},
-            # "priority": {"name": priority}
         }
     })
 
-    # API Request
     try:
         r = requests.post(url, headers=headers, data=payload, auth=auth)
         if r.status_code == 201:
             key = r.json().get("key")
-            print(f"[+] Ticket Created: {key}")
+            logger.info(f"[+] Ticket Created: {key}")
             return key
         else:
-            print(f"[-] Jira Error: {r.text}")
+            logger.error(f"[-] Jira Error: {r.text}")
             return None
     except Exception as e:
-        print(f"[-] Connect Error: {e}")
+        logger.error(f"[-] Connect Error: {e}")
         return None
 
 @app.route('/webhook', methods=['POST'])
@@ -122,9 +129,8 @@ def receive_alert():
     # Logic Check
     is_fp = ip in WHITELIST_IPS
     
-    print(f"\n[!] Alert Received: {ip} | Type: {'FP' if is_fp else 'TP'}")
+    logger.info(f"\n[!] Alert Received: {ip} | Type: {'FP' if is_fp else 'TP'}")
     
-    # Execute Workflow
     ticket = create_issue(ip, "SSH Brute Force", is_fp)
     
     if is_fp and ticket:
@@ -133,5 +139,5 @@ def receive_alert():
     return jsonify({"status": "received"}), 200
 
 if __name__ == '__main__':
-    print("🚀 AI-POWERED SOAR ENGINE READY (Groq Llama 3.3)...")
+    logger.info("🚀 AI-POWERED SOAR ENGINE READY (Groq Llama 3)...")
     app.run(host='0.0.0.0', port=5000)

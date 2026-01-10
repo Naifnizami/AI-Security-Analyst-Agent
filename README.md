@@ -1,74 +1,131 @@
-# 🛡️ AI-Powered SOAR Engine: Splunk ➡️ Jira ➡️ Agno (Llama 3)
-> **Agentic Security Incident Response & Threat Enrichment Pipeline**
+🛡️ AI Security Analyst Agent
 
-## 🎥 Project Demo (V4 Agentic AI)
-**[CLICK HERE TO WATCH THE LIVE DEMO](https://github.com/Naifnizami/SOAR-EDR-Automation-Lab/blob/main/AI_SOC_Agent_Automated_Triage_Demo.mp4)**
+Production-Grade SOAR Microservice
 
-## In this video:
-1.  **False Positive:** Attack from localhost is detected and **Auto-Closed** instantly.
-2.  **True Positive:** Attack from an external network triggers the **AI Agent**, which investigates the IP context and writes a threat report in Jira.
+A containerized Security Orchestration, Automation, and Response (SOAR) platform that automatically triages security alerts using AI.
+It integrates Splunk (SIEM), Groq / Llama-3 (LLM), and Jira (Ticketing) into a fully automated SOC pipeline.
 
-> **📱 Viewing Tip:** *For the best clarity of the terminal text, please view this video on **Mobile** or **download the raw file**, as GitHub's web player compresses the 720p text on desktops.*
+This is not a demo script — this is a deployment-ready SOC microservice.
 
----
+🎥 Demo Video
 
-## 📝 Project Overview
-This project evolves the traditional SOC playbook from "Static Automation" to "Agentic Intelligence."
+If the video does not play inside the GitHub mobile app, tap “View Raw” or download it.
 
-In **Version 4**, I ripped out the hard-coded logic and integrated an autonomous AI Agent (**Agno/Llama-3**) to act as a Tier 1 Analyst. The Agent actively investigates source IPs, determines context (Private vs Public network), scans for threat reputation, and writes a human-readable investigation report directly into the **Jira** ticket.
+🚀 What This Agent Does
 
-### 🧠 V4.0 Agentic Capabilities
-*   **🤖 AI Analyst Integration:** Utilizes **Agno (formerly Phidata)** running the **Llama-3-70b** model via **Groq LPU** for sub-second inference.
-*   **🔍 Autonomous Investigation:** The Agent distinguishes between internal authorized scans (Private IPs) and external threats. It performs web searches (DuckDuckGo) to validate reputation.
-*   **📝 Natural Language Reporting:** Instead of dumping raw JSON logs, the system creates Jira tickets with a written "Analyst Report" summarizing the findings.
+This system acts like a Tier-1 SOC Analyst:
 
-### ⚡ Core Automation Features
-*   **Self-Healing Triage:** False Positives (Whitelist/Internal IPs) are auto-ticketed and immediately transitioned to **DONE** (Closed) to prevent analyst fatigue.
-*   **Loop Prevention:** Splunk alerting optimized with precise cron scheduling (`-1m@m`) to eliminate duplicate alerts for the same event.
+Step	Action
+1	Receives security alerts from Splunk via webhook
+2	Parses the event and extracts suspicious IPs
+3	Determines False Positive vs True Threat
+4	Uses Llama-3 (Groq) to investigate real attackers
+5	Automatically updates Jira
+6	Closes safe alerts or escalates real incidents
 
-## 🛠️ Tech Stack
-*   **SIEM:** Splunk Enterprise 10.x
-*   **AI Framework:** Agno (Phidata)
-*   **LLM Engine:** Groq API (Llama-3.3-70b-versatile)
-*   **Development:** Python 3 (Flask, Requests, RegEx)
-*   **Infrastructure:** Kali Linux, Jira Cloud API
+No human intervention required.
 
-## 🔧 Installation & Usage
-1.  **Clone the Repo:**
-    ```bash
-    git clone https://github.com/Naifnizami/SOAR-EDR-Automation-Lab.git
-    cd SOAR-EDR-Automation-Lab
-    ```
-2.  **Install Requirements:**
-    ```bash
-    pip install -r requirements.txt
-    ```
-3.  **Configure Credentials:**
-    *   Set your `JIRA_API_TOKEN` and `GROQ_API_KEY` as environment variables (Recommended).
-    *   Update `WHITELIST_IPS` in `soar_engine.py` with your trusted assets.
-4.  **Run the Engine:**
-    ```bash
-    python3 soar_engine.py
-    ```
-5.  **Configure Splunk:** Point Webhook action to `http://<your-ip>:5000/webhook`.
+🧠 Core Capabilities
 
----
+Production Architecture
 
-## 🏗️ Architecture Flow (V4)
-```mermaid
-graph TD
-    A[Attacker] -->|SSH Brute Force| B(Kali Linux Logs)
-    B -->|Splunk Monitor| C{Splunk Enterprise}
-    C -->|Webhook Alert| D[Python SOAR Engine]
-    
-    subgraph AIBrain [The AI Brain - Agno + Groq]
-        D -->|Send IP & Context| E{"AI Agent (Llama 3)"}
-        E -->|Reasoning Process| F[Check Context / OSINT]
-        F -->|Return Analysis| D
-    end
-    
-    D -- "Analysis: Safe" --> G[Auto-Close Ticket]
-    D -- "Analysis: Threat" --> H[Escalate to High Priority]
-    
-    G -->|API| I[Jira Board: DONE]
-    H -->|API + AI Report| J[Jira Board: TO DO]
+Gunicorn WSGI server
+
+4 parallel workers
+
+Runs inside hardened Docker container
+
+Smart Detection
+
+Recognizes trusted IPs (localhost, internal scans)
+
+Flags real external attackers
+
+AI-Powered Investigation
+
+Llama-3 performs threat analysis
+
+Generates incident intelligence reports
+
+SOC Automation
+
+Auto-closes false positives
+
+Creates & escalates real incidents in Jira
+
+🏗️ Architecture
+Component	Technology	Purpose
+Container	Docker (Debian Slim)	Portable SOC deployment
+API Server	Flask + Gunicorn	Receives Splunk alerts
+SIEM	Splunk Enterprise	Monitors /var/log/auth.log
+AI Engine	Llama-3-70B (Groq)	Threat investigation
+Ticketing	Jira Cloud API	Incident management
+📦 Quick Start (Production Deployment)
+1️⃣ Clone the Repository
+git clone https://github.com/Naifnizami/AI-Security-Analyst-Agent.git
+cd AI-Security-Analyst-Agent
+
+2️⃣ Configure Secrets
+mv .env.example .env
+
+
+Edit .env:
+
+GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxx
+JIRA_API_TOKEN=ATxxxxxxxxxxxxxx
+JIRA_EMAIL=your_email@example.com
+
+3️⃣ Build the Production Image
+sudo docker build -t sec-agent:prod .
+
+4️⃣ Run the SOC Agent
+sudo docker run -p 5000:5000 --env-file .env sec-agent:prod
+
+
+Your AI SOC Analyst is now live.
+
+🧪 How Alerts Are Generated
+🔹 Method 1 — Direct Injection (Demo Mode)
+
+Used in the video for speed and isolation testing.
+
+curl -X POST http://127.0.0.1:5000/webhook \
+-d '{"result": {"_raw": "Suspicious traffic to 185.196.8.2"}}'
+
+
+These events bypass Splunk and go directly to the Agent for logic testing.
+
+🔹 Method 2 — Real-World SOC Pipeline
+
+Attacker runs
+
+ssh root@<server-ip>
+
+
+Linux logs it to
+
+/var/log/auth.log
+
+
+Splunk detects the failed login
+
+Splunk sends the alert to the Agent
+
+AI investigates and updates Jira
+
+This is true end-to-end SOC automation.
+
+📁 Project Structure
+/
+├── config/              # Whitelists, rules
+├── src/
+│   ├── main.py          # Flask webhook + Gunicorn entry
+│   └── agent_logic.py   # Llama-3 decision engine
+├── Dockerfile          # Production build
+├── requirements.txt    # Locked dependencies
+└── README.md
+
+⚖️ Disclaimer
+
+This project is for educational and defensive security research only.
+You must have explicit authorization to monitor systems or analyze traffic.
