@@ -7,7 +7,7 @@ This is not just a script—this is a **deployment-ready Dockerized application*
 ---
 
 ### 🎥 Demo Video
-[**Click here to watch the Automated Triage Demo**](AI_SOC_Agent_Automated_Triage_Demo.mp4)  
+[**Click here to watch the Automated Triage Demo**](https://github.com/Naifnizami/AI-Security-Analyst-Agent/blob/main/AI_SOC_Agent_Automated.mp4)  
 *(Note: If the video does not play inside the GitHub mobile app, please tap "View Raw" or download the file.)*
 
 ---
