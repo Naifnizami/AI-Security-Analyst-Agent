@@ -54,9 +54,13 @@ mv .env.example .env
 Edit the `.env` file with your keys:
 ```ini
 GROQ_API_KEY=gsk_your_key_here
+ABUSEIPDB_API_KEY=your_abuseipdb_key_here
+
+# Jira Configuration
 JIRA_API_TOKEN=your_jira_token_here
 JIRA_EMAIL=your_email@example.com
-ABUSEIPDB_API_KEY=your_abuseipdb_key_here
+JIRA_URL=https://your-domain.atlassian.net
+JIRA_PROJECT_KEY=KAN
 ```
 
 ### 3. Build & Run
