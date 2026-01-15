@@ -26,12 +26,12 @@ logging.getLogger("neo4j").setLevel(logging.WARNING)
 # ============================
 # ⬇️ JIRA CONFIGURATION ⬇️
 # ============================
-JIRA_URL = "https://nifunaif612181.atlassian.net"
-JIRA_EMAIL = "nifunaif612181@gmail.com"
+# Fetch all config from Environment Variables (Deployment Best Practice)
+JIRA_URL = os.environ.get('JIRA_URL', "https://your-domain.atlassian.net") 
+JIRA_EMAIL = os.environ.get('JIRA_EMAIL')
 JIRA_API_TOKEN = os.environ.get('JIRA_API_TOKEN')
-PROJECT_KEY = "KAN"
+PROJECT_KEY = os.environ.get('JIRA_PROJECT_KEY', "KAN") # Default to KAN if not set
 # ============================
-
 # Whitelist (Your VM Localhost and Test IPs)
 WHITELIST_IPS = ["127.0.0.1", "localhost", "192.168.1.5", "192.168.15.128"]
 
